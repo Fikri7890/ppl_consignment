@@ -200,7 +200,7 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
         'Store': ['Location Code'], 
         'Store_Name': ['Location Name'], # Direct live name capture
         'Date': ['Posting Date2'], 
-        'Name': ['Item Description', 'ITEM DESCRIPTION', 'Item', 'ITEMDESC', 'Description', 'Name']
+        'Name': ['Item Description']
     }
 
     if report_type in ["AEON", "AEON DF"]:
@@ -896,6 +896,16 @@ def main_app_interface(authenticator, name, permissions):
                                 for c in m_cols:
                                     summary[c] = pd.to_numeric(summary[c], errors='coerce').fillna(0)
                                 summary[(m, 'TOTAL')] = summary[m_cols].sum(axis=1)
+                            
+                            if group_col == "Month":
+                                month_order = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                            def screen_sort_key(col_tuple):
+                                m, t = col_tuple
+                                m_idx = list(metrics).index(m) if m in metrics else 99
+                                if t == 'TOTAL': t_idx = 100
+                                else: t_idx = month_order.index(t) if t in month_order else 99
+                                return (m_idx, t_idx)
+                            summary = summary.reindex(columns=sorted(summary.columns, key=screen_sort_key))
                             if (sort_col, 'TOTAL') in summary.columns:
                                 summary = summary.sort_values((sort_col, 'TOTAL'), ascending=False)
                             st.markdown(f"### 🏢 Store Summary")
@@ -924,6 +934,9 @@ def main_app_interface(authenticator, name, permissions):
                                     for c in m_cols:
                                         detail_view[c] = pd.to_numeric(detail_view[c], errors='coerce').fillna(0)
                                     detail_view[(m, 'TOTAL')] = detail_view[m_cols].sum(axis=1)
+                                
+                                if group_col == "Month":
+                                    detail_view = detail_view.reindex(columns=sorted(detail_view.columns, key=screen_sort_key))
                                 if (sort_col, 'TOTAL') in detail_view.columns:
                                     detail_view = detail_view.sort_values((sort_col, 'TOTAL'), ascending=False)
                                 st.markdown(f"#### 📦 Items in {selected_store}")
@@ -951,6 +964,17 @@ def main_app_interface(authenticator, name, permissions):
                                 dist_total =summary[('Dist_Qty','TOTAL')]
                                 str_vals = (sales_total/dist_total * 100).replace([float('inf'), -float('inf')], 0)
                                 summary[('STR%', 'TOTAL')] = str_vals.round(0)
+                            if group_col == "Month":
+                                month_order = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                                actual_metrics = list(metrics)
+                                if 'Sales_Qty' in actual_metrics and 'Dist_Qty' in actual_metrics: actual_metrics.append('STR%')
+                                def item_sort_key(col_tuple):
+                                    m, t = col_tuple
+                                    m_idx = actual_metrics.index(m) if m in actual_metrics else 99
+                                    if t == 'TOTAL': t_idx = 100
+                                    else: t_idx = month_order.index(t) if t in month_order else 99
+                                    return (m_idx, t_idx)
+                                summary = summary.reindex(columns=sorted(summary.columns, key=item_sort_key))
                             if (sort_col, 'TOTAL') in summary.columns:
                                 summary = summary.sort_values((sort_col, 'TOTAL'), ascending=False)
                             st.markdown(f"### 📦 Item Summary")
@@ -1046,6 +1070,25 @@ def main_app_interface(authenticator, name, permissions):
                     val_pivot = create_hierarchical_val(df_clean, 'Store', 'Item_Name', group_col)
                     item_qty_pivot = create_hierarchical_qty(df_clean, 'Item_Name', 'Store', group_col)
                     item_val_pivot = create_hierarchical_val(df_clean, 'Item_Name', 'Store', group_col)
+                    if group_col == "Month":
+                        month_order = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                        
+                        # Helper function to sort MultiIndex columns securely (Metric, Month)
+                        def chronological_column_key(col_tuple):
+                            metric_name, month_name = col_tuple
+                            # Keep metrics grouped together, but sort months chronologically inside them
+                            m_idx = month_order.index(month_name) if month_name in month_order else 99
+                            return (metric_name, m_idx)
+                        
+                        # Reindex all 4 pivots safely
+                        if not qty_pivot.empty:
+                            qty_pivot = qty_pivot.reindex(columns=sorted(qty_pivot.columns, key=chronological_column_key))
+                        if not val_pivot.empty:
+                            val_pivot = val_pivot.reindex(columns=sorted(val_pivot.columns, key=chronological_column_key))
+                        if not item_qty_pivot.empty:
+                            item_qty_pivot = item_qty_pivot.reindex(columns=sorted(item_qty_pivot.columns, key=chronological_column_key))
+                        if not item_val_pivot.empty:
+                            item_val_pivot = item_val_pivot.reindex(columns=sorted(item_val_pivot.columns, key=chronological_column_key))
 
                     # ----------------------------------------------------
                     # FILE 1: BUILD CLEAN FULL REPORT
@@ -1079,6 +1122,9 @@ def main_app_interface(authenticator, name, permissions):
                             
                             # 1. Use the unflattened MultiIndex to safely calculate Grand Totals 
                             master_mask = df_to_write.index.get_level_values(1) == " SUMMARY"
+                            raw_periods = df_to_write.columns.get_level_values(1).unique()
+                            
+                            time_periods = sorted(list(set([col[1] for col in df_to_write.columns if col[1] != 'TOTAL'])), key=lambda x: month_order.index(x) if (group_col == "Month" and x in month_order) else 0)
                             totals = df_to_write[master_mask].sum(numeric_only=True)
                             
                             # 2. Build the 1-Column visual list and strictly map out outline levels
