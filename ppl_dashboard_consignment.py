@@ -368,11 +368,25 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
     # --- LIVE DYNAMIC STORE LOOKUP DICTIONARY GENERATOR ---
     # Automatically extracts Code -> Name mapping from your sales report data rows!
     dynamic_store_lookup = {}
+    
+    # 1. First, seed the lookup map using your master database source (r_loc data)
+    if "AEON" in report_type and 'loc_map_aeon_sales' in locals():
+        # Maps numeric codes directly to master names (e.g., '4021': 'AEON Style Taman Maluri')
+        dynamic_store_lookup.update({str(k): str(v) for k, v in loc_map_aeon_sales.items()})
+    elif "TFP" in report_type and 'loc_map_tfp_sales' in locals():
+        dynamic_store_lookup.update({str(k): str(v) for k, v in loc_map_tfp_sales.items()})
+        
+    # Also include the core NAV location fallback values
+    if 'loc_map_nav' in locals():
+        dynamic_store_lookup.update({str(k): str(v) for k, v in loc_map_nav.items()})
+
+    # 2. Next, complement it using any structural names discovered live inside the sales file rows
     if 'Store' in df_sales.columns and 'Store_Name' in df_sales.columns:
         for _, row in df_sales.dropna(subset=['Store', 'Store_Name']).iterrows():
             raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
             raw_name = str(row['Store_Name']).strip()
             if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"]:
+                # Only adds or overwrites if the file row contains a valid live descriptor string
                 dynamic_store_lookup[raw_code] = raw_name
 
     def process_live_sales_store(x):
