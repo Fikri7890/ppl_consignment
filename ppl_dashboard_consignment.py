@@ -387,24 +387,27 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
 
     # 3. SCAN DISTRIBUTION FILE ROWS (Fixes Store 2060 with 0 sales!)
     # Your dist_cols mapping maps 'StoreName': ['External Doc No.'] for JG
-    dist_name_col = 'StoreName' if 'StoreName' in df_dist.columns else ('Name' if 'Name' in df_dist.columns else None)
-    if 'Store' in df_dist.columns and dist_name_col:
-        for _, row in df_dist.dropna(subset=['Store', dist_name_col]).iterrows():
-            raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
-            raw_name = str(row[dist_name_col]).strip()
-            # Avoid overwriting with item descriptions by checking if string looks like a store name or code layout
-            if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"] and not raw_code.startswith("Item"):
-                # Clean up specific formatting if JG appends code to external doc names
-                if '-' in raw_name: raw_name = raw_name.split('-')[-1].strip()
-                dynamic_store_lookup[raw_code] = raw_name
+    if df_dist is not None and not df_dist.empty:
+        dist_name_col = 'StoreName' if 'StoreName' in df_dist.columns else ('Name' if 'Name' in df_dist.columns else None)
+        if 'Store' in df_dist.columns and dist_name_col:
+            for _, row in df_dist.dropna(subset=['Store', dist_name_col]).iterrows():
+                raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
+                raw_name = str(row[dist_name_col]).strip()
+                
+                # Avoid overwriting with item descriptions
+                if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"] and not raw_code.startswith("Item"):
+                    if '-' in raw_name: 
+                        raw_name = raw_name.split('-')[-1].strip()
+                    dynamic_store_lookup[raw_code] = raw_name
 
     # 4. SCAN WASTAGE FILE ROWS
-    if 'Store' in df_waste.columns and 'MAIN_CODE' in df_waste.columns:
-        for _, row in df_waste.dropna(subset=['Store', 'MAIN_CODE']).iterrows():
-            raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
-            raw_name = str(row['MAIN_CODE']).strip()
-            if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"]:
-                dynamic_store_lookup[raw_code] = raw_name
+    if df_waste is not None and not df_waste.empty:
+        if 'Store' in df_waste.columns and 'MAIN_CODE' in df_waste.columns:
+            for _, row in df_waste.dropna(subset=['Store', 'MAIN_CODE']).iterrows():
+                raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
+                raw_name = str(row['MAIN_CODE']).strip()
+                if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"]:
+                    dynamic_store_lookup[raw_code] = raw_name
 
     def process_live_sales_store(x):
         code = str(x).split('-')[0].replace('.0', '').strip()
