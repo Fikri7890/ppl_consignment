@@ -459,6 +459,16 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
     if df_dist is None: return None
     df_dist = strict_rename(df_dist, dist_cols)
 
+    if 'Store' in df_dist.columns and 'StoreName' in df_dist.columns:
+        for _, row in df_dist.dropna(subset=['Store', 'StoreName']).iterrows():
+            parts = str(row['Store']).split('-')
+            val = next((p for p in parts if p.isdigit() and len(p) == 4), None)
+            if not val: 
+                val = str(row['Store']).strip()
+            raw_name = str(row['StoreName']).strip()
+            if val and raw_name and val not in ["0", "NAN", "NONE", "UNKNOWN"]:
+                dynamic_store_lookup[val] = raw_name
+
     if 'Date' in df_dist.columns:
         df_dist['Date'] = pd.to_datetime(df_dist['Date'], errors='coerce', dayfirst=False)
         # SAVE THIS EXCLUSIVELY FOR THE SIDEBAR CAPTION LOGIC Later:
@@ -466,7 +476,7 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
 
     if df_dist2_raw is not None and not df_dist2_raw.empty:
         dist2_cols = {
-            'NAV': ['Item No.'], 'Qty': ['Quantity'], 'Store': ['Location Code'], 
+            'NAV': ['Item No.'], 'Qty': ['Quantity'], 'Store': ['Location Code'],'StoreName' : ['Location Name'],
             'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 
             'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']
         }
@@ -474,6 +484,15 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
         
         if df_dist2 is not None:
             df_dist2 = strict_rename(df_dist2, dist2_cols)
+            if 'Store' in df_dist2.columns and 'StoreName' in df_dist2.columns:
+                for _, row in df_dist2.dropna(subset=['Store', 'StoreName']).iterrows():
+                    parts = str(row['Store']).split('-')
+                    val = next((p for p in parts if p.isdigit() and len(p) == 4), None)
+                    if not val: 
+                        val = str(row['Store']).strip()
+                    raw_name = str(row['StoreName']).strip()
+                    if val and raw_name and val not in ["0", "NAN", "NONE", "UNKNOWN"]:
+                        dynamic_store_lookup[val] = raw_name
             
             # --- NEW: FILTER DIST2 SO WE DON'T GET UNMAPPED ERRORS FOR OTHER STORES ---
             if report_type in ['AEON', 'AEON DF']:
