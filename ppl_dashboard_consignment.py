@@ -7,7 +7,7 @@ import gspread
 import io
 from oauth2client.service_account import ServiceAccountCredentials
 
-# --- 1. SHARED RESOURCES ----
+# --- 1. SHARED RESOURCES ---
 @st.cache_resource
 def get_gspread_client():
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -215,7 +215,7 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
         
     elif report_type in ["JG", "JG DF"]:
         db_cols = {'Article': ['ITEM CODE', 'ITEMCODE', 'CODE SKU'], 'NAV': ['NAV code', 'NAV_CODE', 'No.', 'NAV CODE'], 'ArtDesc': ['Description'], 'NavDesc': ['Description'], 'UOM': ['UOM']}
-        dist_cols = {'NAV': ['No.', 'M Code'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Transfer-to Code'], 'UOM': ['Unit of Measure Code'], 'Name': ['USOFT product description'], 'Cost': ['Price','COST','Unit Price'], 'Date': ['Posting Date'], 'Chain': ['Your Reference主key']}
+        dist_cols = {'NAV': ['No.', 'M Code'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Transfer-to Code'],'StoreName':['External Doc No.'] ,'UOM': ['Unit of Measure Code'], 'Name': ['USOFT product description'], 'Cost': ['Price','COST','Unit Price'], 'Date': ['Posting Date'], 'Chain': ['Your Reference主key']}
         waste_cols = {'NAV': ['NAV_CODE', 'NAV'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['TOT_AMT', 'Amount'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
 
     elif report_type == "SS_DRY":
@@ -369,24 +369,41 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
     # Automatically extracts Code -> Name mapping from your sales report data rows!
     dynamic_store_lookup = {}
     
-    # 1. First, seed the lookup map using your master database source (r_loc data)
+    # 1. First seed using any master sheets if available (for AEON/TFP)
     if "AEON" in report_type and 'loc_map_aeon_sales' in locals():
-        # Maps numeric codes directly to master names (e.g., '4021': 'AEON Style Taman Maluri')
         dynamic_store_lookup.update({str(k): str(v) for k, v in loc_map_aeon_sales.items()})
     elif "TFP" in report_type and 'loc_map_tfp_sales' in locals():
         dynamic_store_lookup.update({str(k): str(v) for k, v in loc_map_tfp_sales.items()})
-        
-    # Also include the core NAV location fallback values
     if 'loc_map_nav' in locals():
         dynamic_store_lookup.update({str(k): str(v) for k, v in loc_map_nav.items()})
 
-    # 2. Next, complement it using any structural names discovered live inside the sales file rows
+    # 2. SCAN SALES FILE ROWS
     if 'Store' in df_sales.columns and 'Store_Name' in df_sales.columns:
         for _, row in df_sales.dropna(subset=['Store', 'Store_Name']).iterrows():
             raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
             raw_name = str(row['Store_Name']).strip()
             if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"]:
-                # Only adds or overwrites if the file row contains a valid live descriptor string
+                dynamic_store_lookup[raw_code] = raw_name
+
+    # 3. SCAN DISTRIBUTION FILE ROWS (Fixes Store 2060 with 0 sales!)
+    # Your dist_cols mapping maps 'StoreName': ['External Doc No.'] for JG
+    dist_name_col = 'StoreName' if 'StoreName' in df_dist.columns else ('Name' if 'Name' in df_dist.columns else None)
+    if 'Store' in df_dist.columns and dist_name_col:
+        for _, row in df_dist.dropna(subset=['Store', dist_name_col]).iterrows():
+            raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
+            raw_name = str(row[dist_name_col]).strip()
+            # Avoid overwriting with item descriptions by checking if string looks like a store name or code layout
+            if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"] and not raw_code.startswith("Item"):
+                # Clean up specific formatting if JG appends code to external doc names
+                if '-' in raw_name: raw_name = raw_name.split('-')[-1].strip()
+                dynamic_store_lookup[raw_code] = raw_name
+
+    # 4. SCAN WASTAGE FILE ROWS
+    if 'Store' in df_waste.columns and 'MAIN_CODE' in df_waste.columns:
+        for _, row in df_waste.dropna(subset=['Store', 'MAIN_CODE']).iterrows():
+            raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
+            raw_name = str(row['MAIN_CODE']).strip()
+            if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"]:
                 dynamic_store_lookup[raw_code] = raw_name
 
     def process_live_sales_store(x):
