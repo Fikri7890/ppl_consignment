@@ -203,19 +203,34 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
         'Name': ['Item Description']
     }
 
-    if report_type in ["AEON", "AEON DF"]:
+    if report_type in ["AEON"]:
         db_cols = {'Article': ['ITEM CODE', 'ITEMCODE'], 'NAV': ['NAV code', 'NAV_CODE', 'No.'], 'ArtDesc': ['NAV Description', 'Description'], 'NavDesc': ['Aeon Item code', 'ArticleDesc'],'UOM': ['UOM PKT/KG (NAV)', 'UOM']}
-        dist_cols = {'NAV': ['No.', 'M Code'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Transfer-to Code'], 'UOM': ['Unit of Measure Code'], 'Name': ['USOFT product description'], 'Cost': ['Price','COST','Unit Price'], 'Date': ['Posting Date'], 'Chain': ['Your Reference主key']}
+        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
         waste_cols = {'NAV': ['NAV', 'NAV_CODE'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['Amount', 'TOT_AMT'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
 
-    elif report_type in ["TFP", "TFP DF"]:
+    elif report_type in ["AEON DF"]:
+        db_cols = {'Article': ['ITEM CODE', 'ITEMCODE'], 'NAV': ['NAV code', 'NAV_CODE', 'No.'], 'ArtDesc': ['NAV Description', 'Description'], 'NavDesc': ['Aeon Item code', 'ArticleDesc'],'UOM': ['UOM PKT/KG (NAV)', 'UOM']}
+        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
+        waste_cols = {'NAV': ['NAV', 'NAV_CODE'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['Amount', 'TOT_AMT'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
+
+    elif report_type in ["TFP"]:
         db_cols = {'Article': ['CODE SKU', 'cno_sku'], 'NAV': ['NAV CODE', 'id'], 'ArtDesc': ['Description', 'name1'], 'NavDesc': ['Item No/SKU', 'name2'], 'UOM': ['UOM']}
-        dist_cols = {'NAV': ['No.', 'M Code'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Transfer-to Code'], 'UOM': ['Unit of Measure Code'], 'Name': ['USOFT product description'], 'Cost': ['Price','COST','Unit Price'], 'Date': ['Posting Date'], 'Chain': ['Your Reference主key']}
+        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
         waste_cols = {'NAV': ['NAV_CODE', 'NAV'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['TOT_AMT', 'Amount'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
-        
-    elif report_type in ["JG", "JG DF"]:
+    
+    elif report_type in ["TFP DF"]:
+        db_cols = {'Article': ['CODE SKU', 'cno_sku'], 'NAV': ['NAV CODE', 'id'], 'ArtDesc': ['Description', 'name1'], 'NavDesc': ['Item No/SKU', 'name2'], 'UOM': ['UOM']}
+        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
+        waste_cols = {'NAV': ['NAV_CODE', 'NAV'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['TOT_AMT', 'Amount'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
+
+    elif report_type in ["JG"]:
         db_cols = {'Article': ['ITEM CODE', 'ITEMCODE', 'CODE SKU'], 'NAV': ['NAV code', 'NAV_CODE', 'No.', 'NAV CODE'], 'ArtDesc': ['Description'], 'NavDesc': ['Description'], 'UOM': ['UOM']}
-        dist_cols = {'NAV': ['No.', 'M Code'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Transfer-to Code'], 'UOM': ['Unit of Measure Code'], 'Name': ['USOFT product description'], 'Cost': ['Price','COST','Unit Price'], 'Date': ['Posting Date'], 'Chain': ['Your Reference主key']}
+        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
+        waste_cols = {'NAV': ['NAV_CODE', 'NAV'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['TOT_AMT', 'Amount'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
+
+    elif report_type in ["JG DF"]:
+        db_cols = {'Article': ['ITEM CODE', 'ITEMCODE', 'CODE SKU'], 'NAV': ['NAV code', 'NAV_CODE', 'No.', 'NAV CODE'], 'ArtDesc': ['Description'], 'NavDesc': ['Description'], 'UOM': ['UOM']}
+        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
         waste_cols = {'NAV': ['NAV_CODE', 'NAV'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['TOT_AMT', 'Amount'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
 
     elif report_type == "SS_DRY":
@@ -540,13 +555,27 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
     if report_type == 'SS_DRY':
         df_dist['Month'] = "Annual"
         df_dist['Week'] = "Annual"
-        
-    if 'UOM' in df_dist.columns:
-        raw_qty = pd.to_numeric(df_dist['Qty'], errors='coerce').fillna(0)
-        uom_factor = df_dist['UOM'].apply(parse_uom_factor)
-        df_dist['Qty'] = raw_qty * uom_factor 
-        cost = df_dist['Cost'].apply(clean_currency) if 'Cost' in df_dist.columns else 0
-        df_dist['Val'] = df_dist['Qty_1'] * (cost/2)
+    
+    if report_type in ["AEON","AEON DF","TFP","TFP DF","JG","JG DF"]:
+        if 'UOM' in df_dist.columns:
+            raw_qty = pd.to_numeric(df_dist['Qty'], errors='coerce').fillna(0)
+            uom_factor = df_dist['UOM'].apply(parse_uom_factor)
+            
+            # 1. Quantity Rule: For 2025, use raw_qty. For other years, multiply by uom_factor
+            df_dist['Qty'] = np.where(df_dist['Year'] == '2025', raw_qty, raw_qty * uom_factor)
+            
+            # 2. Value Rule: For 2025, bypass formula and use cost directly. For other years, apply (Qty * cost / 2)
+            df_dist['Val'] = np.where(df_dist['Year'] == '2025', cost, df_dist['Qty_1'] * (cost / 2))
+        else:
+            # Fallback if UOM column doesn't exist at all
+            df_dist['Val'] = cost
+    else:
+        if 'UOM' in df_dist.columns:
+            raw_qty = pd.to_numeric(df_dist['Qty'], errors='coerce').fillna(0)
+            uom_factor = df_dist['UOM'].apply(parse_uom_factor)
+            df_dist['Qty'] = raw_qty * uom_factor 
+            cost = df_dist['Cost'].apply(clean_currency) if 'Cost' in df_dist.columns else 0
+            df_dist['Val'] = df_dist['Qty_1'] * (cost/2)
         
     
 
