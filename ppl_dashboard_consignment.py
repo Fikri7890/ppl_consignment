@@ -448,12 +448,20 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
     # --- LIVE DYNAMIC STORE LOOKUP DICTIONARY GENERATOR ---
     # Automatically extracts Code -> Name mapping from your sales report data rows!
     dynamic_store_lookup = {}
-    if 'Store' in df_sales.columns and 'Store_Name' in df_sales.columns:
-        for _, row in df_sales.dropna(subset=['Store', 'Store_Name']).iterrows():
-            raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
-            raw_name = str(row['Store_Name']).strip()
-            if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"]:
-                dynamic_store_lookup[raw_code] = raw_name
+    if report_type in ['JG','JG DF']:
+        if 'Store' in df_sales.columns and 'Store_Name' in df_sales.columns:
+            for _, row in df_sales.dropna(subset=['Store', 'Store_Name']).iterrows():
+                raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
+                raw_name = str(row['Store_Name']).strip()
+                if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"]:
+                    dynamic_store_lookup[raw_code] = raw_name
+    else :
+        if 'Store' in df_sales.columns and 'Store_Name' in df_sales.columns:
+            for _, row in df_sales.dropna(subset=['Store', 'Store_Name']).iterrows():
+                raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
+                raw_name = str(row['Store_Name']).strip()
+                if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"]:
+                    dynamic_store_lookup[raw_code] = raw_name
 
     def process_live_sales_store(x):
         code = str(x).split('-')[0].replace('.0', '').strip()
@@ -597,6 +605,24 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
             if val == "" or val == "0" or val.upper() == "TRANSFER": return "UNKNOWN"
             if val in loc_map_nav.values(): return val # Preserves names from Dist2
             return loc_map_nav.get(val, f"UNMAPPED - {val}")
+        df_dist['Store'] = df_dist['Store'].apply(map_nav)
+    
+    if report_type in ["JG", "JG DF"]:
+        def map_nav(x):
+            parts = str(x).split('-')
+                
+                # 2. Find the part that is numeric and exactly 4 digits long
+                # This ignores 'HC001500' (too long) and '3' (too short)
+            val = next((p for p in parts if p.isdigit() and len(p) == 4), None)
+                
+                # 3. Fallback: If no 4-digit code found, use the original string
+            if not val:
+                val = str(x).strip()
+                
+            if val == "" or val == "0": return "UNKNOWN"
+            if val in loc_map_nav.values(): return val 
+            return dynamic_store_lookup.get(val, f"Store {val}")
+            
         df_dist['Store'] = df_dist['Store'].apply(map_nav)
 
     df_dist['Date'] = pd.to_datetime(df_dist['Date'], errors='coerce')
