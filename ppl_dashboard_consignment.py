@@ -270,22 +270,22 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
 
     if report_type in ["AEON"]:
         db_cols = {'Article': ['ITEM CODE', 'ITEMCODE'], 'NAV': ['NAV code', 'NAV_CODE', 'No.'], 'ArtDesc': ['NAV Description', 'Description'], 'NavDesc': ['Aeon Item code', 'ArticleDesc'],'UOM': ['UOM PKT/KG (NAV)', 'UOM']}
-        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
+        dist_cols = {'NAV': ['No.', 'M Code']  , 'Qty': ['Quantity'], 'Store': ['Transfer-to Code'],'UOM': ['Unit of Measure Code'], 'Name': ['USOFT product description'], 'Cost': ['Unit Price Excl. GST'], 'Date': ['Posting Date']}
         waste_cols = {'NAV': ['NAV', 'NAV_CODE'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['Amount', 'TOT_AMT'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
 
     elif report_type in ["AEON DF"]:
         db_cols = {'Article': ['ITEM CODE', 'ITEMCODE'], 'NAV': ['NAV code', 'NAV_CODE', 'No.'], 'ArtDesc': ['NAV Description', 'Description'], 'NavDesc': ['Aeon Item code', 'ArticleDesc'],'UOM': ['UOM PKT/KG (NAV)', 'UOM']}
-        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
+        dist_cols = {'NAV': ['No.', 'M Code']  , 'Qty': ['Quantity'], 'Store': ['Transfer-to Code'],'UOM': ['Unit of Measure Code'], 'Name': ['USOFT product description'], 'Cost': ['Unit Price Excl. GST'], 'Date': ['Posting Date']}
         waste_cols = {'NAV': ['NAV', 'NAV_CODE'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['Amount', 'TOT_AMT'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
 
     elif report_type in ["TFP"]:
         db_cols = {'Article': ['CODE SKU', 'cno_sku'], 'NAV': ['NAV CODE', 'id'], 'ArtDesc': ['Description', 'name1'], 'NavDesc': ['Item No/SKU', 'name2'], 'UOM': ['UOM']}
-        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
+        dist_cols = {'NAV': ['No.', 'M Code']  , 'Qty': ['Quantity'], 'Store': ['Transfer-to Code'],'UOM': ['Unit of Measure Code'], 'Name': ['USOFT product description'], 'Cost': ['Unit Price Excl. GST'], 'Date': ['Posting Date']}
         waste_cols = {'NAV': ['NAV_CODE', 'NAV'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['TOT_AMT', 'Amount'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
     
     elif report_type in ["TFP DF"]:
         db_cols = {'Article': ['CODE SKU', 'cno_sku'], 'NAV': ['NAV CODE', 'id'], 'ArtDesc': ['Description', 'name1'], 'NavDesc': ['Item No/SKU', 'name2'], 'UOM': ['UOM']}
-        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
+        dist_cols = {'NAV': ['No.', 'M Code']  , 'Qty': ['Quantity'], 'Store': ['Transfer-to Code'],'UOM': ['Unit of Measure Code'], 'Name': ['USOFT product description'], 'Cost': ['Unit Price Excl. GST'], 'Date': ['Posting Date']}
         waste_cols = {'NAV': ['NAV_CODE', 'NAV'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['TOT_AMT', 'Amount'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
 
     elif report_type in ["JG"]:
@@ -961,7 +961,7 @@ def main_app_interface(authenticator, name, permissions):
                     if rpt == 'AEON' or rpt == 'TFP' or rpt== 'JG':
                         df = df[~df['Item_Name'].astype(str).str.upper().str.startswith(('SN ','SNBG '))]
                     elif rpt == 'AEON DF' or rpt == 'TFP DF' or rpt =='JG DF':
-                        mask_is_sn = df['Item_Name'].astype(str).str.upper().str.startswith(('SN ', 'SNBG '))
+                        mask_is_sn = df['Item_Name'].astype(str).str.upper().str.startswith(('SN ', 'SNBG ','SIMPLY '))
                         mask_not_egg = ~df['Item_Name'].astype(str).str.upper().str.contains('SELENIUM EGG MYS PAPER TRAY', na=False)
                         df = df[mask_is_sn & mask_not_egg]
                     
