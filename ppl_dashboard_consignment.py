@@ -1201,29 +1201,44 @@ def main_app_interface(authenticator, name, permissions):
 
                     # Regenerate summaries exclusively for the Clean Excel Report
                     def create_hierarchical_qty(df_source, primary_col, secondary_col, time_col):
+                        # Determine dynamic ranking order matching selected periods 
+                        sort_rank = df_source.groupby(primary_col)['Sales_Qty'].sum().sort_values(ascending=False).index.tolist()
+                        for item in df_source[primary_col].unique():
+                            if item not in sort_rank: sort_rank.append(item)
+
+                        # 1. Master Rows (Store Totals)
                         p = df_source.groupby([primary_col, 'Year', time_col])[qty_display_list].sum()
                         p['STR%'] = (p['Sales_Qty'] / p['Dist_Qty'].replace(0, 1) * 100).replace([np.inf, -np.inf], 0).fillna(0).round(0)
                         p = p.reset_index()
                         p['Detail'] = " SUMMARY"
                         
+                        # 2. Detail Rows (Items inside Store)
                         c = df_source.groupby([primary_col, secondary_col, 'Year', time_col])[qty_display_list].sum()
                         c['STR%'] = (c['Sales_Qty'] / c['Dist_Qty'].replace(0, 1) * 100).replace([np.inf, -np.inf], 0).fillna(0).round(0)
                         c = c.reset_index().rename(columns={secondary_col: 'Detail'})
                         
-                        # Set index across Year and Month/Week simultaneously
-                        combined = pd.concat([p, c]).set_index([primary_col, 'Detail', 'Year', time_col])
-                        unstacked = combined.unstack(level=['Year', time_col]).fillna(0).sort_index(level=[0, 1])
-                        return unstacked
+                        # 3. Combine and Pivot across Year and Month/Week layers securely
+                        combined = pd.concat([p, c])
+                        combined[primary_col] = pd.Categorical(combined[primary_col], categories=sort_rank, ordered=True)
+                        
+                        unstacked = combined.set_index([primary_col, 'Detail', 'Year', time_col]).unstack(level=['Year', time_col]).fillna(0)
+                        return unstacked.sort_index(level=[0, 1])
 
                     def create_hierarchical_val(df_source, primary_col, secondary_col, time_col):
+                        sort_rank = df_source.groupby(primary_col)['Sales_Val'].sum().sort_values(ascending=False).index.tolist()
+                        for item in df_source[primary_col].unique():
+                            if item not in sort_rank: sort_rank.append(item)
+
                         p = df_source.groupby([primary_col, 'Year', time_col])[val_display_list].sum().reset_index()
                         p['Detail'] = " SUMMARY"
                         
                         c = df_source.groupby([primary_col, secondary_col, 'Year', time_col])[val_display_list].sum().reset_index().rename(columns={secondary_col: 'Detail'})
                         
-                        combined = pd.concat([p, c]).set_index([primary_col, 'Detail', 'Year', time_col])
-                        unstacked = combined.unstack(level=['Year', time_col]).fillna(0).sort_index(level=[0, 1])
-                        return unstacked
+                        combined = pd.concat([p, c])
+                        combined[primary_col] = pd.Categorical(combined[primary_col], categories=sort_rank, ordered=True)
+                        
+                        unstacked = combined.set_index([primary_col, 'Detail', 'Year', time_col]).unstack(level=['Year', time_col]).fillna(0)
+                        return unstacked.sort_index(level=[0, 1])
 
                     qty_pivot = create_hierarchical_qty(df_clean, 'Store', 'Item_Name', group_col)
                     val_pivot = create_hierarchical_val(df_clean, 'Store', 'Item_Name', group_col)
@@ -1231,20 +1246,17 @@ def main_app_interface(authenticator, name, permissions):
                     item_val_pivot = create_hierarchical_val(df_clean, 'Item_Name', 'Store', group_col)
                     if group_col == "Month":
                         month_order = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-                        
-                        # Explicitly assigns sorting weights to force metrics to the far right
                         metric_order_weights = {
                             'Dist_Qty': 0, 'Sales_Qty': 1, 'Waste_Qty': 2, 'Balance Stock': 3, 'STR%': 4,
                             'Dist_Val': 0, 'Sales_Val': 1, 'Waste_Val': 2, 'Profit': 3
                         }
                         
-                        # Unpacks 3 levels safely (Metric, Year, Month) and orders by custom weight
+                        # FIX: Accept the 3-level tuple (Metric, Year, Month) to prevent unpacking crashes
                         def chronological_column_key(col_tuple):
                             metric_name, year_val, month_name = col_tuple
-                            
                             m_weight = metric_order_weights.get(metric_name, 99)
                             m_idx = month_order.index(month_name) if month_name in month_order else 99
-                            return (m_weight, year_val, m_idx)
+                            return (m_weight, str(year_val), m_idx)
                         
                         # Reindex all 4 pivots safely using the custom priority rules
                         if not qty_pivot.empty:
