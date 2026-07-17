@@ -533,6 +533,16 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
     if df_dist is None: return None
     df_dist = strict_rename(df_dist, dist_cols)
 
+    if report_type in ['JG', 'JG DF']:
+        if 'Store' in df_dist.columns and 'storeName' in df_dist.columns:
+            for _, row in df_dist.dropna(subset=['Store', 'storeName']).iterrows():
+                raw_code = str(row['Store']).split('-')[0].replace('.0', '').strip()
+                raw_name = str(row['storeName']).strip()
+                if raw_code and raw_name and raw_code not in ["0", "NAN", "NONE", "UNKNOWN"]:
+                    # Supplement any codes that were missing from the sales report file
+                    if raw_code not in dynamic_store_lookup:
+                        dynamic_store_lookup[raw_code] = raw_name
+
     if 'Date' in df_dist.columns:
         df_dist['Date'] = pd.to_datetime(df_dist['Date'], errors='coerce', dayfirst=False)
         # SAVE THIS EXCLUSIVELY FOR THE SIDEBAR CAPTION LOGIC Later:
