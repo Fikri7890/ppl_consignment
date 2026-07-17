@@ -290,12 +290,12 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
 
     elif report_type in ["JG"]:
         db_cols = {'Article': ['ITEM CODE', 'ITEMCODE', 'CODE SKU'], 'NAV': ['NAV code', 'NAV_CODE', 'No.', 'NAV CODE'], 'ArtDesc': ['Description'], 'NavDesc': ['Description'], 'UOM': ['UOM']}
-        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
+        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'storeName': ['Location Name'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
         waste_cols = {'NAV': ['NAV_CODE', 'NAV'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['TOT_AMT', 'Amount'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
 
     elif report_type in ["JG DF"]:
         db_cols = {'Article': ['ITEM CODE', 'ITEMCODE', 'CODE SKU'], 'NAV': ['NAV code', 'NAV_CODE', 'No.', 'NAV CODE'], 'ArtDesc': ['Description'], 'NavDesc': ['Description'], 'UOM': ['UOM']}
-        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
+        dist_cols = {'NAV': ['Item No.'], 'Qty': ['Quantity', 'QTY'], 'Store': ['Location Code'],'storeName': ['Location Name'],'UOM': ['Unit of Measure Code'], 'Name': ['Item Description'], 'Cost': ['Cost Amount (Actual)'], 'Date': ['Posting Date']}
         waste_cols = {'NAV': ['NAV_CODE', 'NAV'], 'Qty': ['QTY', 'Quantity'], 'Weight': ['WEIGHT'], 'Store': ['CNO'], 'Val': ['TOT_AMT', 'Amount'], 'Date': ['DATE', 'Date'], 'Chain': ['MAIN_CODE']}
 
     elif report_type == "SS_DRY":
@@ -628,7 +628,9 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
                 # 3. Fallback: If no 4-digit code found, use the original string
             if not val:
                 val = str(x).strip()
+
                 
+
             if val == "" or val == "0": return "UNKNOWN"
             if val in loc_map_nav.values(): return val 
             return dynamic_store_lookup.get(val, f"Store {val}")
