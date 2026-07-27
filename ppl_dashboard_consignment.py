@@ -478,10 +478,10 @@ def process_data(df_sales_raw, df_db_raw, df_dist_raw, df_waste_raw, report_type
         df_sales['Val'] = df_sales['Val'].apply(clean_currency)*0.8
     elif report_type in ['TFP','TFP DF']:
         df_sales['Val'] =df_sales['Val'].apply(clean_currency)*0.75
-    elif report_type == 'JG':
-        df_sales['Val'] = df_sales['Val'].apply(clean_currency)*0.75
-    elif report_type =="JG DF":
-        df_sales['Val'] =df_sales['Val'].apply(clean_currency)*0.8
+    # elif report_type == 'JG':
+    #     df_sales['Val'] = df_sales['Val'].apply(clean_currency)*0.75
+    # elif report_type =="JG DF":
+    #     df_sales['Val'] =df_sales['Val'].apply(clean_currency)*0.8
     else :
         df_sales['Val'] = df_sales['Val'].apply(clean_currency)
     
